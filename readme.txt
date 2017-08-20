@@ -1,3 +1,9 @@
+
+AWS Java SDK examples
+
+https://github.com/awsdocs/aws-doc-sdk-examples/tree/master/java/example_code
+
+
 You can upload this application using AWS Beanstalk as shown in below youtube video
 
 https://www.youtube.com/watch?v=Jq7qA4VLV04
