@@ -4,14 +4,25 @@ import com.amazonaws.AmazonServiceException;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
+import com.amazonaws.services.dynamodbv2.model.AttributeDefinition;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
+import com.amazonaws.services.dynamodbv2.model.CreateTableResult;
+import com.amazonaws.services.dynamodbv2.model.KeySchemaElement;
+import com.amazonaws.services.dynamodbv2.model.KeyType;
 import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
+import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
+import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
+import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /*
  http://localhost:8080/dynamoDbTables/health
@@ -75,12 +86,74 @@ public class DynamoDbController {
                 }
             } catch (AmazonServiceException e) {
                 System.err.println(e.getErrorMessage());
-                System.exit(1);
+                //System.exit(1);
             }
         }
         System.out.println("\nDone!");
 
         return allTables;
+    }
+
+    @RequestMapping(value = "/create", method = RequestMethod.POST)
+    public @ResponseBody
+    String createTable() {
+        String table_name = "sample";
+
+        System.out.format(
+                "Creating table \"%s\" with a simple primary key: \"Name\".\n",
+                table_name);
+
+        CreateTableRequest request = new CreateTableRequest()
+                .withAttributeDefinitions(new AttributeDefinition(
+                        "Name", ScalarAttributeType.S))// create column named "Name" of type String
+                .withKeySchema(new KeySchemaElement("Name", KeyType.HASH)) // primary key is column "Name"
+                .withProvisionedThroughput(new ProvisionedThroughput(
+                        new Long(10), new Long(10)))
+                .withTableName(table_name);
+
+        AmazonDynamoDB amazonDynamoDB = AmazonDynamoDBClientBuilder.standard()
+                //.setEndpoint("localhost:8000") // only for local dynamodb, for aws dynamodb, by seeing set region, it will create endpoint automatically (http://dynamodb.us-west-2.amazonaws.com)
+                .withRegion(Regions.US_WEST_2.getName()) // not for local dynamodb, only for aws dynamodb
+                .build();
+
+        String createdTableName = null;
+        try {
+            CreateTableResult result = amazonDynamoDB.createTable(request);
+            createdTableName = result.getTableDescription().getTableName();
+        } catch (AmazonServiceException e) {
+            System.err.println(e.getErrorMessage());
+            //System.exit(1);
+        }
+        System.out.println("Done!");
+
+        return createdTableName;
+
+    }
+
+    @RequestMapping(value = "/put", method = RequestMethod.PUT)
+    public void putItem() {
+        String table_name = "sample";
+
+        AmazonDynamoDB amazonDynamoDB = AmazonDynamoDBClientBuilder.standard()
+                //.setEndpoint("localhost:8000") // only for local dynamodb, for aws dynamodb, by seeing set region, it will create endpoint automatically (http://dynamodb.us-west-2.amazonaws.com)
+                .withRegion(Regions.US_WEST_2.getName()) // not for local dynamodb, only for aws dynamodb
+                .build();
+        Map<String, AttributeValue> fieldValue = new HashMap<>();
+
+        fieldValue.put("Name", new AttributeValue("Tushar " + System.currentTimeMillis()));
+        fieldValue.put("Address", new AttributeValue("{\"city\":\"Sacramento\", \"state\":\"CA\", \"zip\":\"98051\"}"));
+
+        try {
+            amazonDynamoDB.putItem(table_name, fieldValue);
+        } catch (ResourceNotFoundException e) {
+            System.err.format("Error: The table \"%s\" can't be found.\n", table_name);
+            System.err.println("Be sure that it exists and that you've typed its name correctly!");
+        } catch (AmazonServiceException e) {
+            System.err.println(e.getMessage());
+        }
+
+        System.out.println("Done!");
+
     }
 
 }
