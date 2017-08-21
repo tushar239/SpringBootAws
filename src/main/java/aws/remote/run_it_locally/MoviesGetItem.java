@@ -8,6 +8,9 @@ import com.amazonaws.services.dynamodbv2.document.spec.GetItemSpec;
 /**
  * @author Tushar Chokshi @ 8/21/17.
  */
+
+// Just like GetItemSpec, there is a BatchGetItemSpec also available for retrieving items in batch.
+
 public class MoviesGetItem extends AbstractMoviesTableOperations {
     public static void main(String[] args) throws Exception {
 
@@ -18,7 +21,8 @@ public class MoviesGetItem extends AbstractMoviesTableOperations {
         int year = 2015;
         String title = "The Big New Movie";
 
-        GetItemSpec spec = new GetItemSpec().withPrimaryKey(PARTITION_KEY_YEAR, year, SORT_KEY_TITLE, title);
+        GetItemSpec spec = new GetItemSpec()
+                .withPrimaryKey(PARTITION_KEY_YEAR, year, SORT_KEY_TITLE, title);
 
         try {
             System.out.println("Attempting to read the item...");
