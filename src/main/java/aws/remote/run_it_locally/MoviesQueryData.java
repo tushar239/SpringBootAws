@@ -59,6 +59,7 @@ public class MoviesQueryData extends AbstractMoviesTableOperations {
         // Retrieve all movies release in year 1985.
         QuerySpec querySpec = new QuerySpec()
                 .withKeyConditionExpression("#yr = :yyyy")
+                .withProjectionExpression("#yr, title, info.rating") // it is like "select year,title,info.rating from Movies where year >= 1950 and year <= 1959
                 .withNameMap(nameMap)
                 .withValueMap(valueMap);
 
