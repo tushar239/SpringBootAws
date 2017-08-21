@@ -1,4 +1,4 @@
-package aws.rest;
+package aws.remote.rest.access_it_using_beanstalk_url;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.regions.Regions;
@@ -25,14 +25,17 @@ import java.util.List;
 import java.util.Map;
 
 /*
- http://localhost:8080/dynamoDbTables/health
+ http://localhost:8080/dynamoDbTables/sample/health
 
  Using beanstalk url - http://springbootaws-dev.us-west-2.elasticbeanstalk.com/dynamoDbTables/list
  You need to get beanstalk url from aws console
+
+ This code runs only on EC2. You cannot run it from local because it does not use user's access keys to connect to DynamoDB.
+ It assumes that your app is deployed on EC2 and that EC2 has right Role assigned to talk to DynamoDB and Beanstalk(if you are using Beanstalk to deploy this app).
  */
 @RestController
-@RequestMapping("/dynamoDbTables")
-public class DynamoDbController {
+@RequestMapping("/dynamoDbTables/sample")
+public class DynamoDbTableOnAwsController {
 
     @RequestMapping(value = "/health", method = RequestMethod.GET)
     public @ResponseBody
@@ -41,21 +44,25 @@ public class DynamoDbController {
     }
 
 
-    @RequestMapping(value = "/list", method = RequestMethod.GET)
-    public @ResponseBody
-    List<String> listDynamoDBTables() {
-        System.out.println("Your DynamoDB tables:\n");
-
+    private AmazonDynamoDB getAmazonDynamoDB() {
         // To connect to DynamoDB from your local, you need access key, but after deploying to EC2 using BeanStalk, if you have correct role assigned to EC2 that can access DynamoDB, then you don't need access keys while running this code from EC2.
         //AWSCredentials awsCredentials = new BasicAWSCredentials(Credentials.access_key_id, Credentials.secret_access_key);
         //AmazonDynamoDB amazonDynamoDB = new AmazonDynamoDBClient(awsCredentials);
 
         //AmazonDynamoDB amazonDynamoDB = AmazonDynamoDBClientBuilder.defaultClient();
-        AmazonDynamoDB amazonDynamoDB = AmazonDynamoDBClientBuilder.standard()
+        //amazonDynamoDB.setEndpoint("localhost:8000"); // only for local dynamodb, for aws dynamodb, by seeing set region, it will create endpoint automatically (http://dynamodb.us-west-2.amazonaws.com)
+        return AmazonDynamoDBClientBuilder.standard()
                 //.setEndpoint("localhost:8000") // only for local dynamodb, for aws dynamodb, by seeing set region, it will create endpoint automatically (http://dynamodb.us-west-2.amazonaws.com)
                 .withRegion(Regions.US_WEST_2.getName()) // not for local dynamodb, only for aws dynamodb
                 .build();
-        //amazonDynamoDB.setEndpoint("localhost:8000"); // only for local dynamodb, for aws dynamodb, by seeing set region, it will create endpoint automatically (http://dynamodb.us-west-2.amazonaws.com)
+    }
+
+    @RequestMapping(value = "/list", method = RequestMethod.GET)
+    public @ResponseBody
+    List<String> listDynamoDBTables() {
+        System.out.println("Your DynamoDB tables:\n");
+        AmazonDynamoDB amazonDynamoDB = getAmazonDynamoDB();
+
 
         List<String> allTables = new ArrayList<>();
 
@@ -111,10 +118,7 @@ public class DynamoDbController {
                         new Long(10), new Long(10)))
                 .withTableName(table_name);
 
-        AmazonDynamoDB amazonDynamoDB = AmazonDynamoDBClientBuilder.standard()
-                //.setEndpoint("localhost:8000") // only for local dynamodb, for aws dynamodb, by seeing set region, it will create endpoint automatically (http://dynamodb.us-west-2.amazonaws.com)
-                .withRegion(Regions.US_WEST_2.getName()) // not for local dynamodb, only for aws dynamodb
-                .build();
+        AmazonDynamoDB amazonDynamoDB = getAmazonDynamoDB();
 
         String createdTableName = null;
         try {
@@ -134,12 +138,9 @@ public class DynamoDbController {
     public void putItem() {
         String table_name = "sample";
 
-        AmazonDynamoDB amazonDynamoDB = AmazonDynamoDBClientBuilder.standard()
-                //.setEndpoint("localhost:8000") // only for local dynamodb, for aws dynamodb, by seeing set region, it will create endpoint automatically (http://dynamodb.us-west-2.amazonaws.com)
-                .withRegion(Regions.US_WEST_2.getName()) // not for local dynamodb, only for aws dynamodb
-                .build();
-        Map<String, AttributeValue> fieldValue = new HashMap<>();
+        AmazonDynamoDB amazonDynamoDB = getAmazonDynamoDB();
 
+        Map<String, AttributeValue> fieldValue = new HashMap<>();
         fieldValue.put("Name", new AttributeValue("Tushar " + System.currentTimeMillis()));
         fieldValue.put("Address", new AttributeValue("{\"city\":\"Sacramento\", \"state\":\"CA\", \"zip\":\"98051\"}"));
 
@@ -151,9 +152,13 @@ public class DynamoDbController {
         } catch (AmazonServiceException e) {
             System.err.println(e.getMessage());
         }
-
         System.out.println("Done!");
-
     }
+
+
+    // practice scenarios
+    // http://docs.aws.amazon.com/amazondynamodb/latest/gettingstartedguide/GettingStarted.Java.03.html#GettingStarted.Java.03.04
+
+
 
 }

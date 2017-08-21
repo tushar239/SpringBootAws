@@ -55,6 +55,14 @@
             <version>1.11.29</version>
         </dependency>
 
+        <!-- Only for local embedded dynamodb. you can install dynamodb instead at run it locally. -->
+        <!-- http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.html -->
+        <!--<dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>DynamoDBLocal</artifactId>
+            <version>[1.11,2.0)</version>
+        </dependency>-->
+
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-cloudwatch</artifactId>

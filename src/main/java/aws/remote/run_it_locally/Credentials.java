@@ -1,4 +1,4 @@
-package aws;
+package aws.remote.run_it_locally;
 
 /**
  * @author Tushar Chokshi @ 8/2/17.
